@@ -1,8 +1,10 @@
+Borra todo y pega esto:
+
 {
   "name": "nasdaqpro-dashboard",
   "version": "1.0.0",
   "description": "NASDAQ PRO GEX Dashboard",
   "engines": {
-    "node": "18.x"
+    "node": "24.x"
   }
 }
