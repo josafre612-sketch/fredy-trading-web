@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NASDAQ PRO — Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#060810;font-family:'Barlow',sans-serif;color:#e2e8f8;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,148,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,148,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+
+.wrap{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:24px 20px;}
+
+/* Header */
+.hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;padding-bottom:16px;border-bottom:1px solid #1e2840;}
+.hdr-brand{display:flex;align-items:center;gap:10px;}
+.hdr-logo{font-family:'Share Tech Mono',monospace;font-size:16px;font-weight:700;color:#fff;}
+.hdr-logo span{color:#e91e8c;}
+.hdr-badge{font-size:10px;background:rgba(233,30,140,0.1);border:1px solid rgba(233,30,140,0.3);color:#e91e8c;padding:3px 10px;border-radius:20px;font-family:'Share Tech Mono',monospace;}
+.hdr-right{display:flex;align-items:center;gap:10px;}
+.hdr-user{font-size:12px;color:#7a8baa;}
+.btn-goto{background:rgba(0,148,255,0.1);border:1px solid rgba(0,148,255,0.3);color:#0094ff;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;}
+.btn-logout{background:rgba(244,67,54,0.1);border:1px solid rgba(244,67,54,0.25);color:#e84040;border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.stat{background:#0d1120;border:1px solid #1e2840;border-radius:10px;padding:14px 16px;border-top:2px solid transparent;}
+.stat.blue{border-top-color:#0094ff;}
+.stat.green{border-top-color:#00d68f;}
+.stat.red{border-top-color:#e84040;}
+.stat.purple{border-top-color:#9c27b0;}
+.stat-lbl{font-size:10px;color:#3a4a6a;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.stat-val{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;}
+.stat.blue .stat-val{color:#0094ff;}
+.stat.green .stat-val{color:#00d68f;}
+.stat.red .stat-val{color:#e84040;}
+.stat.purple .stat-val{color:#ce93d8;}
+
+.main-grid{display:grid;grid-template-columns:1fr 320px;gap:18px;}
+
+/* Users table */
+.card{background:#0d1120;border:1px solid #1e2840;border-radius:12px;overflow:hidden;}
+.card-hdr{padding:14px 18px;border-bottom:1px solid #1a2035;display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'Share Tech Mono',monospace;font-size:12px;font-weight:700;color:#7a8baa;text-transform:uppercase;letter-spacing:1px;}
+.btn-add{background:#0094ff;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Barlow',sans-serif;}
+
+table{width:100%;border-collapse:collapse;}
+th{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#3a4a6a;padding:9px 14px;text-align:left;border-bottom:1px solid #1a2035;font-family:'Share Tech Mono',monospace;}
+td{padding:11px 14px;border-bottom:1px solid rgba(26,32,53,0.5);font-size:12px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.01);}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'Share Tech Mono',monospace;}
+.badge::before{content:'';width:5px;height:5px;border-radius:50%;}
+.badge-active{background:rgba(0,214,143,0.1);color:#00d68f;border:1px solid rgba(0,214,143,0.25);}
+.badge-active::before{background:#00d68f;}
+.badge-inactive{background:rgba(244,67,54,0.1);color:#e84040;border:1px solid rgba(244,67,54,0.25);}
+.badge-inactive::before{background:#e84040;}
+.badge-admin{background:rgba(233,30,140,0.1);color:#e91e8c;border:1px solid rgba(233,30,140,0.25);}
+.badge-admin::before{background:#e91e8c;}
+
+.td-actions{display:flex;gap:5px;}
+.btn-ico{height:26px;border:1px solid #1e2840;background:transparent;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;color:#7a8baa;padding:0 8px;gap:4px;font-family:'Barlow',sans-serif;transition:all 0.1s;}
+.btn-ico:hover{background:#111828;}
+.btn-ico.green:hover{border-color:#00d68f;color:#00d68f;}
+.btn-ico.red:hover{border-color:#e84040;color:#e84040;}
+
+/* Sessions */
+.sessions-list{padding:10px;}
+.session-item{display:flex;flex-direction:column;gap:3px;padding:9px 10px;border-radius:6px;margin-bottom:4px;background:#111828;border-left:2px solid #00d68f;}
+.sess-user{font-size:12px;font-weight:600;color:#e2e8f8;}
+.sess-ip{font-size:10px;color:#0094ff;font-family:'Share Tech Mono',monospace;}
+.sess-time{font-size:10px;color:#3a4a6a;}
+
+/* Add user form */
+.form-card{background:#0d1120;border:1px solid #1e2840;border-radius:12px;overflow:hidden;}
+.form-hdr{padding:12px 16px;border-bottom:1px solid #1a2035;font-family:'Share Tech Mono',monospace;font-size:11px;font-weight:700;color:#0094ff;}
+.form-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;}
+.form-lbl{font-size:10px;color:#7a8baa;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;display:block;}
+.form-input{background:#111828;border:1px solid #1e2840;color:#e2e8f8;border-radius:6px;padding:8px 10px;font-family:'Barlow',sans-serif;font-size:12px;outline:none;width:100%;transition:border 0.15s;}
+.form-input:focus{border-color:#0094ff;}
+.btn-submit{background:linear-gradient(135deg,#0060b0,#0094ff);color:#fff;border:none;border-radius:6px;padding:9px;font-size:13px;font-weight:600;cursor:pointer;width:100%;font-family:'Barlow',sans-serif;}
+
+.log-card{background:#0d1120;border:1px solid #1e2840;border-radius:12px;overflow:hidden;margin-top:14px;}
+.log-body{padding:10px;max-height:180px;overflow-y:auto;}
+.log-item{display:flex;gap:7px;padding:5px 7px;border-radius:4px;margin-bottom:2px;font-size:11px;}
+.log-item:hover{background:#111828;}
+.log-dot{width:6px;height:6px;border-radius:50%;margin-top:3px;flex-shrink:0;}
+.log-dot-g{background:#00d68f;}
+.log-dot-r{background:#e84040;}
+.log-dot-b{background:#0094ff;}
+.log-dot-w{background:#f5a623;}
+.log-text{color:#7a8baa;flex:1;line-height:1.5;}
+.log-text strong{color:#e2e8f8;}
+.log-time{font-family:'Share Tech Mono',monospace;font-size:9px;color:#3a4a6a;flex-shrink:0;}
+
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:#060810;}
+::-webkit-scrollbar-thumb{background:#1e2840;border-radius:2px;}
+.empty{text-align:center;padding:24px;color:#3a4a6a;font-size:12px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="hdr-brand">
+      <div class="hdr-logo">nasdaq<span>PRO</span></div>
+      <div class="hdr-badge">ADMIN PANEL</div>
+    </div>
+    <div class="hdr-right">
+      <span class="hdr-user" id="adminName">Cargando...</span>
+      <button class="btn-goto" onclick="window.location.href='/index.html'">Ver Dashboard</button>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat blue"><div class="stat-lbl">Total usuarios</div><div class="stat-val" id="sTot">-</div></div>
+    <div class="stat green"><div class="stat-lbl">Activos</div><div class="stat-val" id="sAct">-</div></div>
+    <div class="stat red"><div class="stat-lbl">Inactivos</div><div class="stat-val" id="sInact">-</div></div>
+    <div class="stat purple"><div class="stat-lbl">En línea ahora</div><div class="stat-val" id="sOnline">-</div></div>
+  </div>
+
+  <div class="main-grid">
+    <div>
+      <div class="card">
+        <div class="card-hdr">
+          <span class="card-title">// USUARIOS REGISTRADOS</span>
+          <button class="btn-add" onclick="document.getElementById('fName').focus()">+ Agregar usuario</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Nombre</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Último acceso</th>
+              <th>IP</th>
+              <th>Accesos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="8" class="empty">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Sesiones activas -->
+      <div class="card" style="margin-top:14px;">
+        <div class="card-hdr">
+          <span class="card-title">// SESIONES ACTIVAS AHORA</span>
+          <button class="btn-ico" onclick="loadData()">↻ Actualizar</button>
+        </div>
+        <div id="sessionsList" class="sessions-list">
+          <div class="empty">Cargando...</div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <!-- Agregar usuario -->
+      <div class="form-card">
+        <div class="form-hdr">+ AGREGAR USUARIO</div>
+        <div class="form-body">
+          <div><label class="form-lbl">Nombre completo</label><input class="form-input" id="fName" placeholder="Ej: Juan Pérez"/></div>
+          <div><label class="form-lbl">Usuario</label><input class="form-input" id="fUser" placeholder="Ej: juanperez"/></div>
+          <div><label class="form-lbl">Contraseña</label><input class="form-input" id="fPass" type="password" placeholder="Mín. 6 caracteres"/></div>
+          <button class="btn-submit" onclick="addUser()">Crear usuario</button>
+        </div>
+      </div>
+
+      <!-- Log de actividad -->
+      <div class="log-card">
+        <div class="card-hdr" style="padding:11px 16px;">
+          <span class="card-title" style="font-size:10px;">// ACTIVIDAD RECIENTE</span>
+        </div>
+        <div class="log-body" id="logBody">
+          <div class="empty" style="padding:16px;">Sin actividad aún</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let token = localStorage.getItem('nqpro_token');
+let currentUser = JSON.parse(localStorage.getItem('nqpro_user') || '{}');
+let logs = JSON.parse(localStorage.getItem('admin_logs') || '[]');
+
+// Verificar acceso admin
+async function checkAuth() {
+  if(!token) { window.location.href = '/login.html'; return; }
+  try {
+    const r = await fetch('/api/auth?action=verify', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const d = await r.json();
+    if(!d.valid || d.user.role !== 'admin') {
+      window.location.href = '/login.html';
+      return;
+    }
+    document.getElementById('adminName').textContent = d.user.name || d.user.username;
+    loadData();
+  } catch(e) {
+    window.location.href = '/login.html';
+  }
+}
+
+async function loadData() {
+  try {
+    const r = await fetch('/api/auth?action=users', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const d = await r.json();
+    if(!r.ok) { window.location.href = '/login.html'; return; }
+    renderUsers(d.users);
+    renderSessions(d.sessions);
+    updateStats(d.users, d.sessions);
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('usersTable');
+  if(!users.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">No hay usuarios</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td style="font-family:'Share Tech Mono',monospace;font-size:11px;color:#0094ff;">${u.username}</td>
+      <td style="font-weight:600;">${u.name}</td>
+      <td>${u.role==='admin'?'<span class="badge badge-admin">Admin</span>':'<span style="font-size:11px;color:#7a8baa;">Usuario</span>'}</td>
+      <td>${u.active?'<span class="badge badge-active">Activo</span>':'<span class="badge badge-inactive">Inactivo</span>'}</td>
+      <td style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:#7a8baa;">${u.lastLogin?new Date(u.lastLogin).toLocaleString('es',{dateStyle:'short',timeStyle:'short'}):'Nunca'}</td>
+      <td style="font-family:\'Share Tech Mono\',monospace;font-size:10px;color:#0094ff;">${u.lastIP||'—'}</td>
+      <td style="font-family:\'Share Tech Mono\',monospace;font-size:11px;color:#7a8baa;">${u.loginCount||0}</td>
+      <td>
+        <div class="td-actions">
+          ${u.role!=='admin'?`
+          <button class="btn-ico ${u.active?'red':'green'}" onclick="toggleUser('${u.id}','${u.username}',${u.active})">
+            ${u.active?'⊘ Desactivar':'✓ Activar'}
+          </button>
+          <button class="btn-ico red" onclick="deleteUser('${u.id}','${u.username}')">✕</button>
+          `:'<span style="font-size:10px;color:#3a4a6a;">—</span>'}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderSessions(sessions) {
+  const cont = document.getElementById('sessionsList');
+  if(!sessions.length) {
+    cont.innerHTML = '<div class="empty">No hay sesiones activas</div>';
+    return;
+  }
+  cont.innerHTML = sessions.map(s => `
+    <div class="session-item">
+      <div class="sess-user">${s.username}</div>
+      <div class="sess-ip">IP: ${s.ip}</div>
+      <div class="sess-time">Ingresó: ${new Date(s.loginAt).toLocaleString('es',{dateStyle:'short',timeStyle:'short'})} · Última actividad: ${new Date(s.lastSeen).toLocaleTimeString('es')}</div>
+    </div>
+  `).join('');
+}
+
+function updateStats(users, sessions) {
+  document.getElementById('sTot').textContent = users.length;
+  document.getElementById('sAct').textContent = users.filter(u=>u.active).length;
+  document.getElementById('sInact').textContent = users.filter(u=>!u.active).length;
+  document.getElementById('sOnline').textContent = sessions.length;
+}
+
+async function addUser() {
+  const name = document.getElementById('fName').value.trim();
+  const username = document.getElementById('fUser').value.trim();
+  const password = document.getElementById('fPass').value;
+  if(!name||!username||!password) { alert('Completa todos los campos.'); return; }
+  if(password.length < 6) { alert('La contraseña debe tener mínimo 6 caracteres.'); return; }
+  try {
+    const r = await fetch('/api/auth?action=adduser', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ name, username, password })
+    });
+    const d = await r.json();
+    if(!r.ok) { alert(d.error); return; }
+    addLog('g', `<strong>${name}</strong> agregado — usuario: ${username}`);
+    document.getElementById('fName').value = '';
+    document.getElementById('fUser').value = '';
+    document.getElementById('fPass').value = '';
+    loadData();
+  } catch(e) { alert('Error al crear usuario.'); }
+}
+
+async function toggleUser(id, username, active) {
+  if(!confirm(`¿${active?'Desactivar':'Activar'} al usuario ${username}?`)) return;
+  try {
+    const r = await fetch('/api/auth?action=toggleuser', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ userId: id })
+    });
+    const d = await r.json();
+    if(!r.ok) { alert(d.error); return; }
+    addLog(d.active?'g':'r', `<strong>${username}</strong> ${d.active?'activado':'desactivado'}`);
+    loadData();
+  } catch(e) { alert('Error.'); }
+}
+
+async function deleteUser(id, username) {
+  if(!confirm(`¿Eliminar permanentemente al usuario ${username}?`)) return;
+  try {
+    const r = await fetch('/api/auth?action=deleteuser', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ userId: id })
+    });
+    const d = await r.json();
+    if(!r.ok) { alert(d.error); return; }
+    addLog('r', `<strong>${username}</strong> eliminado`);
+    loadData();
+  } catch(e) { alert('Error.'); }
+}
+
+async function doLogout() {
+  await fetch('/api/auth?action=logout', {
+    method: 'POST',
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).catch(()=>{});
+  localStorage.removeItem('nqpro_token');
+  localStorage.removeItem('nqpro_user');
+  window.location.href = '/login.html';
+}
+
+function addLog(type, msg) {
+  const time = new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'});
+  logs.unshift({type, msg, time});
+  if(logs.length > 50) logs.pop();
+  localStorage.setItem('admin_logs', JSON.stringify(logs));
+  renderLog();
+}
+
+function renderLog() {
+  const body = document.getElementById('logBody');
+  if(!logs.length) { body.innerHTML = '<div class="empty" style="padding:16px;">Sin actividad</div>'; return; }
+  body.innerHTML = logs.map(e => `
+    <div class="log-item">
+      <div class="log-dot log-dot-${e.type}"></div>
+      <div class="log-text">${e.msg}</div>
+      <div class="log-time">${e.time}</div>
+    </div>`).join('');
+}
+
+// Auto-refresh cada 30 segundos
+setInterval(loadData, 30000);
+checkAuth();
+renderLog();
+</script>
+</body>
+</html>

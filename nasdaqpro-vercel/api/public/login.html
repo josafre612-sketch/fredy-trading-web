@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>NASDAQ PRO — Acceso</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#060810;font-family:'Barlow',sans-serif;color:#e2e8f8;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,148,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,148,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;}
+
+.card{background:#0d1120;border:1px solid #1e2840;border-radius:16px;padding:40px 36px;width:420px;max-width:95vw;position:relative;z-index:1;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#e91e8c,#0094ff,#00d68f);border-radius:16px 16px 0 0;}
+
+.logo-wrap{text-align:center;margin-bottom:32px;}
+.logo-icon{width:56px;height:56px;background:linear-gradient(135deg,#0a1a3a,#0d2050);border:1px solid rgba(0,148,255,0.3);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.logo-svg{width:32px;height:32px;}
+.logo-name{font-family:'Share Tech Mono',monospace;font-size:20px;font-weight:700;letter-spacing:2px;color:#fff;}
+.logo-name span{color:#e91e8c;}
+.logo-sub{font-size:12px;color:#3a4a6a;margin-top:4px;letter-spacing:1px;}
+
+.form-group{margin-bottom:18px;}
+.form-label{display:block;font-size:11px;color:#7a8baa;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+.form-input{width:100%;background:#111828;border:1px solid #1e2840;color:#e2e8f8;border-radius:8px;padding:12px 14px;font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border 0.15s;}
+.form-input:focus{border-color:#0094ff;}
+.form-input::placeholder{color:#3a4a6a;}
+
+.btn-login{width:100%;background:linear-gradient(135deg,#0060b0,#0094ff);color:#fff;border:none;border-radius:8px;padding:13px;font-family:'Barlow',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:opacity 0.15s;margin-top:6px;letter-spacing:0.5px;}
+.btn-login:hover{opacity:0.88;}
+.btn-login:disabled{opacity:0.5;cursor:not-allowed;}
+
+.error-box{background:rgba(244,67,54,0.08);border:1px solid rgba(244,67,54,0.25);border-radius:7px;padding:10px 13px;font-size:12px;color:#ef9a9a;margin-bottom:16px;display:none;}
+.error-box.show{display:block;}
+
+.loading{display:none;text-align:center;color:#7a8baa;font-size:12px;margin-top:12px;}
+.loading.show{display:block;}
+
+.footer-txt{text-align:center;font-size:11px;color:#3a4a6a;margin-top:24px;}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-icon">
+      <svg class="logo-svg" viewBox="0 0 32 32" fill="none">
+        <polygon points="4,28 4,4 11,4 21,20 21,4 28,4 28,28 21,28 11,12 11,28" fill="#7ab8e8"/>
+      </svg>
+    </div>
+    <div class="logo-name">nasdaq<span>PRO</span></div>
+    <div class="logo-sub">GEX · GAMMA · DARK POOL</div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="form-group">
+    <label class="form-label">Usuario</label>
+    <input class="form-input" id="username" type="text" placeholder="Tu usuario" autocomplete="username"/>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Contraseña</label>
+    <input class="form-input" id="password" type="password" placeholder="Tu contraseña" autocomplete="current-password"/>
+  </div>
+
+  <button class="btn-login" id="btnLogin" onclick="doLogin()">Ingresar</button>
+  <div class="loading" id="loading">Verificando acceso...</div>
+
+  <div class="footer-txt">Plataforma privada · Solo usuarios autorizados</div>
+</div>
+
+<script>
+// Enter key
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errBox   = document.getElementById('errorBox');
+  const loading  = document.getElementById('loading');
+  const btn      = document.getElementById('btnLogin');
+
+  if(!username || !password) {
+    showError('Por favor ingresa usuario y contraseña.');
+    return;
+  }
+
+  btn.disabled = true;
+  loading.classList.add('show');
+  errBox.classList.remove('show');
+
+  try {
+    const res = await fetch('/api/auth?action=login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+
+    if(!res.ok) {
+      showError(data.error || 'Error al iniciar sesión.');
+      return;
+    }
+
+    // Guardar token
+    localStorage.setItem('nqpro_token', data.token);
+    localStorage.setItem('nqpro_user',  JSON.stringify(data.user));
+
+    // Redirigir según rol
+    if(data.user.role === 'admin') {
+      window.location.href = '/admin.html';
+    } else {
+      window.location.href = '/index.html';
+    }
+
+  } catch(e) {
+    showError('Error de conexión. Intenta de nuevo.');
+  } finally {
+    btn.disabled = false;
+    loading.classList.remove('show');
+  }
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.textContent = msg;
+  box.classList.add('show');
+}
+
+// Si ya está logueado, redirigir
+const token = localStorage.getItem('nqpro_token');
+if(token) {
+  fetch('/api/auth?action=verify', {
+    headers: { 'Authorization': 'Bearer ' + token }
+  }).then(r => r.json()).then(d => {
+    if(d.valid) {
+      window.location.href = d.user.role === 'admin' ? '/admin.html' : '/index.html';
+    }
+  }).catch(()=>{});
+}
+</script>
+</body>
+</html>
